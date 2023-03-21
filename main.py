@@ -1,26 +1,51 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Path
+from pydantic import BaseModel, Field
+from typing  import Optional
+
 
 #crear aplicación
 app = FastAPI()
 #modificar documentación creada con Swagger :port/docs
 app.title = "Mi aplicación con FastAPI"
 app.version = "0.0.1"
+#Para acceder a sistema de documentación /docs
+
+class Movie(BaseModel):
+    id: Optional[int] = None
+    title: str = Field(minlength=1)
+    overview: str
+    year: int = Field(le=2022)
+    rating: float = Field(ge=0, le=10)
+    category: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 1,
+                "title": "Mi película",
+                "overview": "Descripción",
+                "year": 0,
+                "rating": 0.0,
+                "category": "sin categoría" 
+            }
+        }
+
 
 movies = [
     {
         'id': 1,
         'title': 'Avatar',
         'overview': "En un exuberante planeta llamado Pandora viven los Na'vi, seres que ...",
-        'year': '2009',
-        'rating': 7.8,
+        'year': 2009,
+        'rating': 9.4,
         'category': 'Acción'    
     }, 
     {
         'id': 2,
-        'title': 'Avatar',
-        'overview': "En un exuberante planeta llamado Pandora viven los Na'vi, seres que ...",
-        'year': '2009',
-        'rating': 7.8,
+        'title': 'Avatar2',
+        'overview': "En un exuberante planeta llamado Pandora viven los Na'vi 2, seres que ...",
+        'year': 2022,
+        'rating': 8.9,
         'category': 'Acción'    
     } 
 ]
@@ -49,27 +74,22 @@ def get_movies_by_category(category: str, year: int):
     return []
 
 @app.post('/movies', tags = ['movies'])
-def create_movie(id : int = Body(), title: str = Body(), overview: str = Body(), year: int = Body(), rating: float  = Body(), category: str = Body()):
-    movies.append({
-        "id": id,
-        "title": title,
-        "overview": overview,
-        "year": year,
-        "rating": rating,
-        "category": category
-    })
+# Datos con Body 
+def create_movie(movie: Movie):
+    movies.append(movie)
     return movies
 
+# Agregar un modelo
 @app.put('/movies/{id}', tags=['movies'])
-def modify_movie(id : int, title: str = Body(), overview: str = Body(), year: int = Body(), rating: float  = Body(), category: str = Body()):
+def modify_movie(id : int, movie: Movie):
     for movie in movies:
         if movie['id'] == id:
             movies['id'] = id
-            movies['title'] = title
-            movies['overview'] = overview
-            movies['year'] = year
-            movies['rating'] = rating
-            movies['category'] = category
+            movies['title'] = movie.title
+            movies['overview'] = movie.overview
+            movies['year'] = movie.year
+            movies['rating'] = movie.rating
+            movies['category'] = movie.category
     return movies
 
 @app.delete('/movies/{id}',tags=['movies'])
